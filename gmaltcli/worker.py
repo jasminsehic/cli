@@ -9,11 +9,11 @@ import hashlib
 try:
     # Python 3
     import queue
-    from urllib.request import urlopen
+    from urllib.request import urlopen, Request
     from urllib.error import HTTPError, URLError
 except ImportError:
     # Python 2
-    from urllib2 import urlopen, HTTPError, URLError
+    from urllib2 import urlopen, Request, HTTPError, URLError
     import Queue as queue
 
 try:
@@ -98,7 +98,7 @@ class WorkerPool(object):
         .. note:: Used instead of the threading `join` method in order to allow
             the main thread to watch for event like `KeyboardInterrupt`
         """
-        while any([worker.isAlive() for worker in self.workers]):
+        while any([worker.is_alive() for worker in self.workers]):
             time.sleep(0.1)
 
     def start(self):
@@ -230,9 +230,10 @@ class InvalidCheckSumException(Exception):
 class DownloadWorker(Worker):
     """ Worker in charge of downloading zip file into `folder` """
 
-    def __init__(self, id_, queue_obj, counter, stop_event, folder):
+    def __init__(self, id_, queue_obj, counter, stop_event, folder, cookie):
         super(DownloadWorker, self).__init__(id_, queue_obj, counter, stop_event)
         self.folder = folder
+        self.cookie = cookie
         self.max_attempt = 3
 
     def process(self, queue_item, counter_info):
@@ -286,7 +287,10 @@ class DownloadWorker(Worker):
             self._log_debug('file %s exists and is valid at location %s', (filename, file_fullpath))
             return
 
-        hgt_zip_file = urlopen(url)
+        req = Request(url)
+        req.add_header('Cookie', self.cookie)
+
+        hgt_zip_file = urlopen(req)
         with open(file_fullpath, 'wb+') as output:
             while True:
                 data = hgt_zip_file.read(4096)
@@ -297,7 +301,7 @@ class DownloadWorker(Worker):
                     os.fsync(output.fileno())
                     break
 
-        self._validate_downloaded_file(file_fullpath, md5sum)
+        #self._validate_downloaded_file(file_fullpath, md5sum)
 
     def _file_exists(self, filepath, md5sum):
         """ Check if a file has already been downloaded. Useful in case of

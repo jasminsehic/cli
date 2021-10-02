@@ -62,13 +62,14 @@ class LoadDatasetAction(argparse.Action):
         setattr(namespace, 'dataset_files', data)
 
 
-def download_hgt_zip_files(working_dir, data, concurrency, skip=False):
+def download_hgt_zip_files(working_dir, data, concurrency, skip=False, cookie=None):
     """ Download the HGT zip files from remote server
 
     :param str working_dir: folder to put the downloaded files in
     :param dict data: dataset of SRTM data
     :param int concurrency: number of worker to start
     :param bool skip: if True skip this step
+    :param str cookie: if set then add header to authorize download
     """
     if skip:
         logging.debug('Download skipped')
@@ -76,7 +77,7 @@ def download_hgt_zip_files(working_dir, data, concurrency, skip=False):
 
     logging.info('Nb of files to download : {}'.format(len(data)))
     logging.debug('Download start')
-    download_task = worker.WorkerPool(worker.DownloadWorker, concurrency, working_dir)
+    download_task = worker.WorkerPool(worker.DownloadWorker, concurrency, working_dir, cookie)
     download_task.fill(data)
     download_task.start()
     logging.debug('Download end')

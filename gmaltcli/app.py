@@ -78,6 +78,7 @@ def create_get_hgt_parser():
                         help='Set this flag if you don\'t want to unzip the HGT zip files')
     parser.add_argument('-c', type=int, dest='concurrency', default=1,
                         help='How many worker will attempt to download or unzip files in parallel')
+    parser.add_argument('--cookie', type=str, dest='cookie', help='Authorization cookie value (example: DATA=SFdsfd7sdf9sdfsd33dsfds)')
     parser.add_argument('-v', dest='verbose', action='store_true', help='increase verbosity level')
     return parser
 
@@ -102,7 +103,7 @@ def get_hgt():
     try:
         # Download HGT zip file in a pool of thread
         tools.download_hgt_zip_files(args.folder, args.dataset_files, args.concurrency,
-                                     skip=args.skip_download)
+                                     skip=args.skip_download, cookie=args.cookie)
         # Unzip in folder all HGT zip files found in folder
         tools.extract_hgt_zip_files(args.folder, args.concurrency, skip=args.skip_unzip)
     except KeyboardInterrupt:
